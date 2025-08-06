@@ -1,0 +1,246 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - represents both buyers and suppliers
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  walletAddress String @unique
+  avatar    String?
+  phone     String?
+  address   String?
+  isSupplier Boolean @default(false)
+  isVerified Boolean @default(false)
+  kycStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  supplierProfile Supplier?
+  reviews        Review[]
+  orders         Order[]
+  nfts           NFT[]
+  loyaltyPoints  LoyaltyPoint[]
+  bids           Bid[]
+
+  @@map("users")
+}
+
+// Supplier profile - extended info for suppliers
+model Supplier {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  businessName String
+  description String?
+  logo        String?
+  website     String?
+  location    String?
+  rating      Float    @default(0)
+  totalSales  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+  loyaltyPrograms LoyaltyProgram[]
+  reviews   Review[]
+  orders    Order[]
+  auctions  Auction[]
+
+  @@map("suppliers")
+}
+
+// Product model
+model Product {
+  id          String   @id @default(cuid())
+  supplierId  String
+  name        String
+  description String
+  category    String
+  price       Float
+  quantity    Int
+  unit        String   // kg, piece, etc.
+  images      String[] // Array of image URLs
+  isOrganic   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  nftTokenId  String?  // ERC-1155 token ID
+  nftContractAddress String? // ERC-1155 contract address
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  reviews    Review[]
+  orderItems OrderItem[]
+  nfts       NFT[]
+  auctions   Auction[]
+
+  @@map("products")
+}
+
+// Review model
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  supplierId String
+  rating    Int      // 1-5 stars
+  comment   String?
+  images    String[] // Array of image URLs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+// Order model
+model Order {
+  id            String   @id @default(cuid())
+  userId        String
+  supplierId    String
+  totalAmount   Float
+  status        String   @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+  paymentMethod String   // CRYPTO, FIAT
+  transactionHash String? // Blockchain transaction hash
+  deliveryAddress String
+  deliveryMethod String   // PICKUP, DELIVERY
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplier   Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+// OrderItem model
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// NFT model - represents ERC-1155 tokens
+model NFT {
+  id                String   @id @default(cuid())
+  userId            String
+  productId         String?
+  tokenId           String   @unique // ERC-1155 token ID
+  contractAddress   String   // ERC-1155 contract address
+  metadata          Json     // NFT metadata (name, description, image, attributes)
+  isUsed            Boolean  @default(false) // Whether NFT has been used in transaction
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("nfts")
+}
+
+// Loyalty Program model
+model LoyaltyProgram {
+  id                String   @id @default(cuid())
+  supplierId        String
+  name              String
+  description       String?
+  pointsPerPurchase Float    // Points earned per token spent
+  pointsToDiscount  Float    // Points needed for 1 token discount
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  supplier       Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  loyaltyPoints  LoyaltyPoint[]
+
+  @@map("loyalty_programs")
+}
+
+// Loyalty Points model
+model LoyaltyPoint {
+  id                String   @id @default(cuid())
+  userId            String
+  loyaltyProgramId  String
+  points            Float    @default(0)
+  earnedAt          DateTime @default(now())
+  expiresAt         DateTime?
+  isUsed            Boolean  @default(false)
+
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loyaltyProgram  LoyaltyProgram  @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_points")
+}
+
+// Auction model
+model Auction {
+  id          String   @id @default(cuid())
+  productId   String
+  supplierId  String
+  startPrice  Float
+  currentPrice Float
+  startTime   DateTime
+  endTime     DateTime
+  isActive    Boolean  @default(true)
+  winnerId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier  Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  bids      Bid[]
+
+  @@map("auctions")
+}
+
+// Bid model
+model Bid {
+  id        String   @id @default(cuid())
+  auctionId String
+  userId    String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  // Relations
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bids")
+}
