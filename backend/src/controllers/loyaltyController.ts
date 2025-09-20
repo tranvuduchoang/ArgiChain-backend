@@ -1,9 +1,18 @@
 import { Request, Response } from 'express';
-import { getBuyerLoyaltyPoints, getSupplierLoyaltyProgram, setSupplierLoyaltyProgram, redeemBuyerPoints } from '../services/loyaltyService';
+import {
+  getBuyerLoyaltyPoints,
+  getSupplierLoyaltyProgram,
+  setSupplierLoyaltyProgram,
+  redeemBuyerPoints,
+} from '../services/loyaltyService';
 
-export const getBuyerLoyaltyPointsHandler = async (req: Request, res: Response) => {
+export const getBuyerLoyaltyPointsHandler = async (req: Request, res: Response): Promise<void> => {
   try {
-    const buyerId = Number(req.params.buyerId);
+    const { buyerId } = req.params;
+    if (!buyerId) {
+      res.status(400).json({ error: 'buyerId is required' });
+      return;
+    }
     const points = await getBuyerLoyaltyPoints(buyerId);
     res.status(200).json(points);
   } catch (err) {
@@ -11,9 +20,13 @@ export const getBuyerLoyaltyPointsHandler = async (req: Request, res: Response) 
   }
 };
 
-export const getSupplierLoyaltyProgramHandler = async (req: Request, res: Response) => {
+export const getSupplierLoyaltyProgramHandler = async (req: Request, res: Response): Promise<void> => {
   try {
-    const supplierId = Number(req.params.supplierId);
+    const { supplierId } = req.params;
+    if (!supplierId) {
+      res.status(400).json({ error: 'supplierId is required' });
+      return;
+    }
     const program = await getSupplierLoyaltyProgram(supplierId);
     res.status(200).json(program);
   } catch (err) {
@@ -21,24 +34,47 @@ export const getSupplierLoyaltyProgramHandler = async (req: Request, res: Respon
   }
 };
 
-export const setSupplierLoyaltyProgramHandler = async (req: Request, res: Response) => {
+export const setSupplierLoyaltyProgramHandler = async (req: Request, res: Response): Promise<void> => {
   try {
-    const supplierId = Number(req.params.supplierId);
-    const { earnRate, redeemRate } = req.body;
-    if (!earnRate || !redeemRate) return res.status(400).json({ error: 'Missing earnRate or redeemRate' });
-    const program = await setSupplierLoyaltyProgram(supplierId, Number(earnRate), Number(redeemRate));
+    const { supplierId } = req.params;
+    if (!supplierId) {
+      res.status(400).json({ error: 'supplierId is required' });
+      return;
+    }
+
+    const { earnRatePerToken, redeemValuePerPoint, description } = req.body;
+    if (earnRatePerToken === undefined || redeemValuePerPoint === undefined) {
+      res.status(400).json({ error: 'earnRatePerToken and redeemValuePerPoint are required' });
+      return;
+    }
+
+    const program = await setSupplierLoyaltyProgram(
+      supplierId,
+      Number(earnRatePerToken),
+      Number(redeemValuePerPoint),
+      description ? String(description) : undefined,
+    );
     res.status(200).json(program);
   } catch (err) {
     res.status(500).json({ error: 'Failed to set supplier loyalty program', details: err instanceof Error ? err.message : err });
   }
 };
 
-export const redeemBuyerPointsHandler = async (req: Request, res: Response) => {
+export const redeemBuyerPointsHandler = async (req: Request, res: Response): Promise<void> => {
   try {
-    const buyerId = Number(req.params.buyerId);
-    const { supplierId, points } = req.body;
-    if (!supplierId || !points) return res.status(400).json({ error: 'Missing supplierId or points' });
-    const result = await redeemBuyerPoints(buyerId, Number(supplierId), Number(points));
+    const { buyerId } = req.params;
+    if (!buyerId) {
+      res.status(400).json({ error: 'buyerId is required' });
+      return;
+    }
+
+    const { supplierId, points, referenceId } = req.body;
+    if (!supplierId || points === undefined) {
+      res.status(400).json({ error: 'supplierId and points are required' });
+      return;
+    }
+
+    const result = await redeemBuyerPoints(String(buyerId), String(supplierId), Number(points), referenceId ? String(referenceId) : undefined);
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to redeem points', details: err instanceof Error ? err.message : err });

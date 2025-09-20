@@ -1,300 +1,171 @@
 # AgriChain Backend
 
-Backend API server for AgriChain - Blockchain-based Agricultural Marketplace built with Node.js, Express, TypeScript, and Prisma.
-
-## 🚀 Features
-
-- **RESTful API** with Express.js and TypeScript
-- **Database ORM** with Prisma and PostgreSQL
-- **User Management** with authentication and authorization
-- **Product Management** with NFT integration
-- **Order Management** with blockchain transactions
-- **Review System** for products and suppliers
-- **Loyalty Points** system
-- **Auction/Bidding** functionality
-- **File Upload** support
-- **Rate Limiting** and security features
-
-## 🛠️ Tech Stack
-
-- **Runtime**: Node.js 18+
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Authentication**: JWT
-- **File Upload**: Multer
-- **Validation**: Joi/Zod
-- **Testing**: Jest
-
-## 📦 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd BackEnd
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Set up database**
-   ```bash
-   # Install PostgreSQL (if not already installed)
-   # Create database
-   createdb agrichain
-   
-   # Run Prisma migrations
-   npm run prisma:migrate
-   
-   # Generate Prisma client
-   npm run prisma:generate
-   ```
-
-5. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-# Database Configuration
-DATABASE_URL="postgresql://postgres:password@localhost:5432/agrichain"
-
-# Server Configuration
-PORT=5000
-NODE_ENV=development
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRES_IN=7d
-
-# Blockchain Configuration
-POLYGON_RPC_URL=https://rpc.cardona.zkevm-rpc.com
-POLYGON_CHAIN_ID=2442
-
-# File Upload Configuration
-UPLOAD_PATH=./uploads
-MAX_FILE_SIZE=5242880
-
-# CORS Configuration
-CORS_ORIGIN=http://localhost:3000
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-```
-
-### Database Setup
-
-#### Option 1: Local PostgreSQL
-1. Install PostgreSQL
-2. Create database: `createdb agrichain`
-3. Update DATABASE_URL in .env
-
-#### Option 2: Docker PostgreSQL
-```bash
-docker run --name agrichain-postgres \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=agrichain \
-  -p 5432:5432 \
-  -d postgres:15
-```
-
-#### Option 3: Cloud Database (Supabase, Railway, etc.)
-1. Create PostgreSQL database on cloud platform
-2. Copy connection string to DATABASE_URL
-
-## 📁 Project Structure
-
-```
-src/
-├── config/           # Configuration files
-│   ├── database.ts   # Database configuration
-│   └── server.ts     # Server configuration
-├── controllers/      # Route controllers
-├── routes/          # API routes
-├── services/        # Business logic
-├── middleware/      # Custom middleware
-├── utils/           # Utility functions
-├── types/           # TypeScript type definitions
-└── index.ts         # Server entry point
-
-prisma/
-├── schema.prisma    # Database schema
-└── migrations/      # Database migrations
-```
-
-## 🗄️ Database Schema
-
-### Core Models
-
-- **User**: Users (buyers and suppliers)
-- **Supplier**: Extended supplier profiles
-- **Product**: Agricultural products with NFT integration
-- **Order**: Purchase orders with blockchain transactions
-- **Review**: Product and supplier reviews
-- **NFT**: ERC-1155 token management
-- **LoyaltyProgram**: Supplier loyalty programs
-- **Auction**: Product auctions and bidding
-
-### Key Features
-
-- **Wallet Integration**: Users linked to blockchain wallets
-- **NFT Management**: ERC-1155 tokens for products
-- **Loyalty System**: Points-based rewards
-- **Auction System**: Bidding functionality
-- **Review System**: Rating and feedback
-- **KYC Support**: User verification system
-
-## 🚀 Available Scripts
-
-```bash
-# Development
-npm run dev          # Start development server with hot reload
-npm run build        # Build for production
-npm run start        # Start production server
-
-# Database
-npm run prisma:generate  # Generate Prisma client
-   npx prisma migrate dev
-   
-npm run prisma:migrate   # Run database migrations
-npm run prisma:studio    # Open Prisma Studio
-npm run prisma:seed      # Seed database with sample data
-
-# Testing
-npm test             # Run tests
-npm run test:watch   # Run tests in watch mode
-```
-
-## 📚 API Endpoints
-
-### Health Check
-- `GET /health` - Server health status
-
-### API Documentation
-- `GET /api` - API overview and available endpoints
-
-### Planned Endpoints
-- `GET /api/users` - User management
-- `GET /api/products` - Product management
-- `GET /api/suppliers` - Supplier management
-- `GET /api/orders` - Order management
-- `GET /api/reviews` - Review system
-- `GET /api/nfts` - NFT management
-- `GET /api/auctions` - Auction system
-
-## 🔐 Authentication
-
-The API uses JWT (JSON Web Tokens) for authentication:
-
-1. **Register/Login** to get access token
-2. **Include token** in Authorization header: `Bearer <token>`
-3. **Protected routes** require valid token
-
-## 📤 File Upload
-
-File uploads are supported for:
-- User avatars
-- Product images
-- Review images
-- KYC documents
-
-Files are stored locally in the `uploads/` directory.
-
-## 🔒 Security Features
-
-- **CORS** protection
-- **Rate limiting** to prevent abuse
-- **Input validation** and sanitization
-- **JWT authentication**
-- **Environment variable** protection
-- **SQL injection** protection via Prisma
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-## 🚀 Deployment
-
-### Production Build
-```bash
-npm run build
-npm start
-```
-
-### Environment Variables
-Make sure to set all required environment variables in production:
-- `NODE_ENV=production`
-- `DATABASE_URL` (production database)
-- `JWT_SECRET` (strong secret key)
-- `CORS_ORIGIN` (frontend domain)
-
-### Docker Deployment
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 5000
-CMD ["npm", "start"]
-```
-
-## 🔮 Future Features
-
-- [ ] Real-time notifications with WebSocket
-- [ ] Advanced search and filtering
-- [ ] Payment gateway integration
-- [ ] Email notifications
-- [ ] Admin dashboard
-- [ ] Analytics and reporting
-- [ ] Mobile API optimization
-- [ ] GraphQL support
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation
+Purpose-built Node.js + TypeScript service powering the AgriChain marketplace. This document introduces the architecture, local development workflow, and operational runbooks so a new engineer can deploy and extend the platform confidently.
 
 ---
 
-**AgriChain Backend** - Powering the future of agricultural commerce 🌱 
+## 1. System Overview
+
+AgriChain connects farmers (suppliers) and buyers through an NFT-enabled marketplace. The backend exposes REST APIs for:
+
+- Supplier brand onboarding and team management
+- Product batch creation with optional marketplace listings
+- NFT token metadata tracking (off-chain) and inventory management
+- Order lifecycle (pricing, fulfillment, payment reconciliation)
+- Loyalty programs, reviews, and auctions (under active development)
+
+The service integrates with a Polygon-compatible blockchain (Hardhat stack lives in ../blockchain) to mint and transfer ERC-1155 tokens representing agricultural lots.
+
+![Backend Architecture](docs/diagrams/backend-architecture.png)
+
+> If the diagram file is missing locally, re-export from the shared design source. Use it as a reference for request routing, service layers, and data stores.
+
+---
+
+## 2. Tech Stack
+
+| Layer              | Tooling / Version                                          |
+|--------------------|------------------------------------------------------------|
+| Runtime            | Node.js 18+, npm                                           |
+| Framework          | Express 4 + TypeScript 5                                   |
+| ORM / Database     | Prisma 6 / PostgreSQL (local: postgres://postgres@localhost:5432/agrichain) |
+| Authn / Security   | JWT (planned), CORS w/ origin allowlist                    |
+| File storage       | Local uploads/ (replaceable with S3-compatible storage)  |
+| Blockchain bridge  | Hardhat, Ethers v6, Polygon zkEVM Cardona / Mumbai targets |
+| Tooling            | ts-node-dev (dev), ESLint, npm scripts                     |
+
+---
+
+## 3. Repository Structure
+
+`
+backend/
++-- docs/                  # living documentation (API, runbooks, playbooks)
++-- prisma/                # schema + migrations
++-- src/
+�   +-- config/            # environment + server configuration
+�   +-- controllers/       # HTTP handlers (input validation, response mapping)
+�   +-- middleware/        # shared Express middleware (upload, auth placeholder)
+�   +-- routes/            # route definitions grouped by domain
+�   +-- services/          # business logic; single place Prisma is imported
+�   +-- index.ts           # app bootstrap
++-- package.json           # scripts and dependencies
++-- tsconfig.json          # TypeScript compiler config
+`
+
+Cross-cutting docs that complement this README live in docs/:
+
+- docs/api-overview.md � endpoint catalog and data flows (updated regularly)
+- docs/setup-local.md � environment provisioning & troubleshooting (create next)
+- docs/product-nft-flow.md � canonical NFT mint & trade lifecycle (create next)
+
+---
+
+## 4. Getting Started
+
+1. **Install dependencies**
+   `ash
+   cd backend
+   npm install
+   `
+
+2. **Environment variables**
+   Copy .env.example (if present) to .env and set:
+   - DATABASE_URL � PostgreSQL connection string
+   - Future additions: JWT secrets, CORS origins, blockchain RPC URLs
+
+3. **Database migration**
+   `ash
+   npx prisma migrate dev --name init
+   `
+   This applies the Prisma schema (prisma/schema.prisma) to your local database and generates typed clients.
+
+4. **Run in development**
+   `ash
+   npm run dev
+   `
+   Starts Express with 	s-node-dev, auto-reloading on file changes.
+
+5. **Type check / build**
+   `ash
+   npm run build   # tsc compile to ./dist
+   `
+
+6. **Access API**
+   - Health: GET http://localhost:5000/health
+   - API index: GET http://localhost:5000/api
+
+---
+
+## 5. Operational Concepts
+
+### 5.1 Supplier Brands
+- Users can promote themselves from buyers to suppliers via POST /api/suppliers.
+- Each supplier has a unique slug, profile metadata, and brand members with roles.
+- Services enforce ownership and allow deactivation without deleting historical records.
+
+### 5.2 Products & Marketplace Listings
+- Products represent token-enabled agricultural batches (total supply, units, pricing).
+- Optional marketplace listing metadata dictates search tags, featured flags, and order limits.
+- Stock is tracked via vailableSupply and InventoryLot records.
+
+### 5.3 Orders & Payments
+- Orders currently track fiat/crypto totals and reserved quantities.
+- Payment receipts are modeled for blockchain transaction hashes; integration with smart contracts is on the roadmap for the next sprint.
+
+### 5.4 Loyalty & Reviews
+- Loyalty ledger captures earn/redeem transactions per supplier program.
+- Reviews require associated orders/products and pass through moderation states.
+
+---
+
+## 6. Data Model (Prisma)
+
+![](docs/diagrams/prisma-model.png)
+
+Key tables:
+- Supplier, BrandMember � storefront metadata & team roles
+- Product, MarketplaceListing, InventoryLot � saleable goods & availability
+- ProductToken, TokenTransfer, NFT � blockchain asset mirror
+- Order, OrderItem, PaymentReceipt � commerce transactions
+- LoyaltyProgram, LoyaltyLedger � customer rewards
+- Review, Auction, Bid � reputation and advanced sale mechanics
+
+Regenerate the Prisma client after schema changes:
+`ash
+npx prisma generate
+`
+
+---
+
+## 7. Testing & Verification
+
+- **Unit / integration tests**: currently minimal. Add Jest suites under src/__tests__/ alongside service modules.
+- **Manual testing**: use REST clients (Insomnia/Postman) against local instance.
+- **Type safety**: rely on 
+pm run build in CI to block invalid DTO changes.
+
+---
+
+## 8. Deployment Checklist
+
+1. Environment variables configured (DB, CORS, blockchain RPC, JWT secrets)
+2. Run 
+pm run build
+3. Apply migrations: 
+px prisma migrate deploy
+4. Start service via process manager (PM2, systemd, Docker) with 
+ode dist/index.js
+5. Hook up reverse proxy / TLS as required
+
+---
+
+## 9. Next Actions
+
+- Finalize blockchain integration plan (see docs/product-nft-flow.md once created)
+- Implement authentication/authorization guardrails
+- Build automated tests for supplier/product flows
+- Connect with frontend to validate end-to-end NFT mint/trade experience
+
+Maintain this README as the source-of-truth onboarding guide. Update diagrams and linked docs whenever domain logic evolves.
+

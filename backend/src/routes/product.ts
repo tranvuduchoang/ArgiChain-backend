@@ -1,11 +1,20 @@
 import express from 'express';
-import { createProductHandler, getAllProductsHandler, getProductByIdHandler } from '../controllers/productController';
+import {
+  confirmProductMintHandler,
+  createProductHandler,
+  getAllProductsHandler,
+  getProductByIdHandler,
+  listMarketplaceProductsHandler,
+  prepareProductMintHandler,
+} from '../controllers/productController';
 
 const router = express.Router();
 
-// Tạo sản phẩm mới (mint NFT)
 router.post('/', createProductHandler);
 router.get('/', getAllProductsHandler);
+router.get('/marketplace/listings', listMarketplaceProductsHandler);
+router.post('/:productId/mint/prepare', prepareProductMintHandler);
+router.post('/:productId/mint/confirm', confirmProductMintHandler);
 router.get('/:id', getProductByIdHandler);
 
 export default router;

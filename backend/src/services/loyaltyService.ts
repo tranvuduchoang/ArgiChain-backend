@@ -1,55 +1,153 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/database';
+import {
+  LoyaltyTransactionType,
+  LoyaltyTransactionSource,
+  PaymentMethod,
+} from '@prisma/client';
 
-const prisma = new PrismaClient();
+export async function getBuyerLoyaltyPoints(userId: string) {
+  const entries = await prisma.loyaltyLedger.findMany({
+    where: { userId },
+    orderBy: { occurredAt: 'desc' },
+    include: {
+      supplier: true,
+      program: true,
+    },
+  });
 
-// Buyer xem điểm
-export async function getBuyerLoyaltyPoints(buyerId: number) {
-  return prisma.loyaltyPoint.findMany({ where: { buyerId } });
+  const balances = entries.reduce<Record<string, number>>((acc, entry) => {
+    const current = acc[entry.supplierId] ?? 0;
+    acc[entry.supplierId] = current + entry.points;
+    return acc;
+  }, {});
+
+  return {
+    balances,
+    entries,
+  };
 }
 
-// Supplier xem chương trình điểm thưởng
-export async function getSupplierLoyaltyProgram(supplierId: number) {
-  return prisma.loyaltyProgram.findUnique({ where: { supplierId } });
-}
-
-// Supplier cấu hình chương trình điểm thưởng
-export async function setSupplierLoyaltyProgram(supplierId: number, earnRate: number, redeemRate: number) {
-  return prisma.loyaltyProgram.upsert({
+export async function getSupplierLoyaltyProgram(supplierId: string) {
+  return prisma.loyaltyProgram.findUnique({
     where: { supplierId },
-    update: { earnRate, redeemRate },
-    create: { supplierId, earnRate, redeemRate },
   });
 }
 
-// Buyer đổi điểm lấy ưu đãi
-export async function redeemBuyerPoints(buyerId: number, supplierId: number, points: number) {
-  // Lấy chương trình điểm thưởng
-  const program = await prisma.loyaltyProgram.findUnique({ where: { supplierId } });
-  if (!program) throw new Error('Supplier loyalty program not found');
-  // Lấy điểm hiện có
-  const loyalty = await prisma.loyaltyPoint.findUnique({ where: { buyerId_supplierId: { buyerId, supplierId } } });
-  if (!loyalty || loyalty.points < points) throw new Error('Not enough points');
-  // Tính số token được đổi
-  const tokens = Math.floor(points / program.redeemRate);
-  // Trừ điểm
-  await prisma.loyaltyPoint.update({
-    where: { buyerId_supplierId: { buyerId, supplierId } },
-    data: { points: { decrement: points } },
+export async function setSupplierLoyaltyProgram(
+  supplierId: string,
+  earnRatePerToken: number,
+  redeemValuePerPoint: number,
+  description?: string,
+) {
+  if (earnRatePerToken <= 0 || redeemValuePerPoint <= 0) {
+    throw new Error('Earn and redeem rates must be positive');
+  }
+
+  const existing = await prisma.loyaltyProgram.findUnique({ where: { supplierId } });
+
+  if (existing) {
+    return prisma.loyaltyProgram.update({
+      where: { id: existing.id },
+      data: {
+        earnRatePerToken,
+        redeemValuePerPoint,
+        description,
+        isActive: true,
+      },
+    });
+  }
+
+  return prisma.loyaltyProgram.create({
+    data: {
+      supplierId,
+      name: 'Default Loyalty Program',
+      earnRatePerToken,
+      redeemValuePerPoint,
+      description,
+    },
   });
-  // TODO: Gọi smart contract chuyển token thưởng (mock)
-  return { tokensRedeemed: tokens };
 }
 
-// Hàm cộng điểm cho buyer khi mua hàng (gọi từ orderService)
-export async function addLoyaltyPoints(buyerId: number, supplierId: number, amount: number) {
-  // Lấy chương trình điểm thưởng
-  const program = await prisma.loyaltyProgram.findUnique({ where: { supplierId } });
-  if (!program) return;
-  const points = Math.floor(amount / program.earnRate);
-  if (points <= 0) return;
-  await prisma.loyaltyPoint.upsert({
-    where: { buyerId_supplierId: { buyerId, supplierId } },
-    update: { points: { increment: points } },
-    create: { buyerId, supplierId, points },
+const getCurrentBalance = async (userId: string, supplierId: string) => {
+  const latest = await prisma.loyaltyLedger.findFirst({
+    where: { userId, supplierId },
+    orderBy: { occurredAt: 'desc' },
   });
+  return latest?.balanceAfter ?? 0;
+};
+
+export async function addLoyaltyPoints(
+  userId: string,
+  supplierId: string,
+  loyaltyProgramId: string,
+  amountSpent: number,
+  paymentMethod: PaymentMethod = PaymentMethod.CRYPTO,
+) {
+  const program = await prisma.loyaltyProgram.findUnique({ where: { id: loyaltyProgramId } });
+  if (!program || !program.isActive) return null;
+  if (amountSpent <= 0) return null;
+
+  const earnRate = Number(program.earnRatePerToken);
+  if (earnRate <= 0) return null;
+
+  const pointsEarned = Math.floor(amountSpent / earnRate);
+  if (pointsEarned <= 0) return null;
+
+  const previousBalance = await getCurrentBalance(userId, supplierId);
+  const newBalance = previousBalance + pointsEarned;
+
+  return prisma.loyaltyLedger.create({
+    data: {
+      userId,
+      supplierId,
+      loyaltyProgramId,
+      type: LoyaltyTransactionType.EARN,
+      source: LoyaltyTransactionSource.ORDER,
+      points: pointsEarned,
+      balanceAfter: newBalance,
+      notes: `Earned from purchase using ${paymentMethod}`,
+    },
+  });
+}
+
+export async function redeemBuyerPoints(
+  userId: string,
+  supplierId: string,
+  pointsToRedeem: number,
+  referenceId?: string,
+) {
+  if (pointsToRedeem <= 0) throw new Error('Points to redeem must be positive');
+
+  const program = await prisma.loyaltyProgram.findUnique({
+    where: { supplierId },
+  });
+  if (!program || !program.isActive) throw new Error('Supplier loyalty program not found');
+
+  const previousBalance = await getCurrentBalance(userId, supplierId);
+  if (previousBalance < pointsToRedeem) {
+    throw new Error('Not enough points');
+  }
+
+  const newBalance = previousBalance - pointsToRedeem;
+  const redeemValue = Number(program.redeemValuePerPoint);
+  const tokensRedeemed = Math.floor(pointsToRedeem * redeemValue);
+
+  const ledgerEntry = await prisma.loyaltyLedger.create({
+    data: {
+      userId,
+      supplierId,
+      loyaltyProgramId: program.id,
+      type: LoyaltyTransactionType.REDEEM,
+      source: LoyaltyTransactionSource.ORDER,
+      points: -pointsToRedeem,
+      balanceAfter: newBalance,
+      referenceId,
+      notes: 'Redeemed for discounts or rewards',
+    },
+  });
+
+  return {
+    tokensRedeemed,
+    ledgerEntry,
+  };
 }

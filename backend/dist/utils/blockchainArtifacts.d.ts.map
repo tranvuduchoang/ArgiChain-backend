@@ -1,0 +1,1 @@
+{"version":3,"file":"blockchainArtifacts.d.ts","sourceRoot":"","sources":["../../src/utils/blockchainArtifacts.ts"],"names":[],"mappings":"AAIA,MAAM,WAAW,gBAAgB;IAC/B,GAAG,EAAE,OAAO,CAAC;IACb,QAAQ,CAAC,EAAE,MAAM,CAAC;CACnB;AAED,eAAO,MAAM,oBAAoB,GAAI,cAAc,MAAM,KAAG,gBAsB3D,CAAC"}

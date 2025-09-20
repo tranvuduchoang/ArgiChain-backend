@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 
-export const uploadImage = (req: Request, res: Response) => {
+export const uploadImage = (req: Request, res: Response): void => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+    res.status(400).json({ error: 'No file uploaded' });
+    return;
   }
-  // Đường dẫn trả về cho frontend (có thể cần chỉnh sửa nếu deploy)
   const fileUrl = `/uploads/${req.file.filename}`;
   res.status(200).json({ url: fileUrl });
 };
