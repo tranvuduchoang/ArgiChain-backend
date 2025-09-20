@@ -154,7 +154,7 @@ export async function createSupplier(input: CreateSupplierInput) {
 }
 
 export async function listSuppliers(params?: SupplierQueryParams) {
-  return prisma.supplier.findMany({
+  const suppliers = await prisma.supplier.findMany({
     where: buildSupplierWhere(params),
     include: {
       members: true,
@@ -163,11 +163,22 @@ export async function listSuppliers(params?: SupplierQueryParams) {
         orderBy: { createdAt: 'desc' },
       },
       loyaltyPrograms: true,
+      _count: {
+        select: {
+          products: true,
+        },
+      },
     },
     orderBy: {
       createdAt: 'desc',
     },
   });
+
+  // Add totalProducts to each supplier
+  return suppliers.map(supplier => ({
+    ...supplier,
+    totalProducts: supplier._count.products,
+  }));
 }
 
 export async function getSupplierById(supplierId: string) {
