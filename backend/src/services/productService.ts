@@ -233,7 +233,7 @@ export async function prepareProductMint(productId: string) {
   // If no template exists, use the main AgriChainNFT contract
   if (!template) {
     // Use the main deployed AgriChainNFT contract
-    const mainContractAddress = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+    const mainContractAddress = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1';
     
     template = await prisma.smartContractTemplate.create({
       data: {

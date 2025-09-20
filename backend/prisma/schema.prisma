@@ -54,6 +54,13 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum DeliveryStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  DISPUTED
+}
+
 enum PaymentMethod {
   CRYPTO
   FIAT
@@ -118,13 +125,14 @@ model User {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  supplierProfile Supplier?
-  brandMemberships BrandMember[]
-  reviews          Review[]
-  orders           Order[]      @relation("UserOrders")
-  loyaltyLedger    LoyaltyLedger[]
-  nftHoldings      NFT[]
-  bids             Bid[]
+  supplierProfile     Supplier?
+  brandMemberships    BrandMember[]
+  reviews             Review[]
+  orders              Order[]              @relation("UserOrders")
+  loyaltyLedger       LoyaltyLedger[]
+  nftHoldings         NFT[]
+  bids                Bid[]
+  deliveryConfirmations DeliveryConfirmation[]
 
   @@map("users")
 }
@@ -288,17 +296,18 @@ model Review {
 }
 
 model Order {
-  id              String       @id @default(cuid())
-  orderNumber     String       @unique
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique
   userId          String
   supplierId      String
-  status          OrderStatus  @default(PENDING)
+  status          OrderStatus    @default(PENDING)
+  deliveryStatus  DeliveryStatus @default(PENDING)
   paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus @default(PENDING)
-  subtotalAmount  Decimal       @db.Decimal(18, 4)
-  feeAmount       Decimal       @db.Decimal(18, 4)
-  totalAmount     Decimal       @db.Decimal(18, 4)
-  currency        String        @default("MATIC")
+  paymentStatus   PaymentStatus  @default(PENDING)
+  subtotalAmount  Decimal        @db.Decimal(18, 4)
+  feeAmount       Decimal        @db.Decimal(18, 4)
+  totalAmount     Decimal        @db.Decimal(18, 4)
+  currency        String         @default("MATIC")
   transactionHash String?
   deliveryAddress String
   deliveryMethod  String
@@ -307,14 +316,15 @@ model Order {
   cancelledAt     DateTime?
   cancelReason    String?
   notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  user     User      @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
-  supplier Supplier  @relation("SupplierOrders", fields: [supplierId], references: [id], onDelete: Cascade)
-  items    OrderItem[]
-  payment  PaymentReceipt?
-  reviews  Review[]
+  user                User                  @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  supplier            Supplier              @relation("SupplierOrders", fields: [supplierId], references: [id], onDelete: Cascade)
+  items               OrderItem[]
+  payment             PaymentReceipt?
+  reviews             Review[]
+  deliveryConfirmations DeliveryConfirmation[]
 
   @@map("orders")
 }
@@ -530,5 +540,28 @@ model OnChainEventLog {
 
   @@index([contractAddress, chainId])
   @@map("onchain_event_logs")
+}
+
+model DeliveryConfirmation {
+  id              String         @id @default(cuid())
+  orderId         String
+  userId          String
+  confirmedAt     DateTime       @default(now())
+  status          DeliveryStatus @default(PENDING)
+  rating          Int?           // 1-5 stars
+  comment         String?
+  images          String[]       // Optional photos
+  hasComplaint    Boolean        @default(false)
+  qualityRating   String?        // "Good" or "Bad"
+  nftBurnTxHash   String?        // Transaction hash when NFT is burned
+  nftBurnStatus   String?        // "PENDING", "SUCCESS", "FAILED"
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, userId])
+  @@map("delivery_confirmations")
 }
 

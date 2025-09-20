@@ -9,6 +9,7 @@ import orderRoute from "./routes/order";
 import loyaltyRoute from "./routes/loyalty";
 import reviewRoute from "./routes/review";
 import supplierRoute from "./routes/supplier";
+import deliveryConfirmationRoute from "./routes/deliveryConfirmation";
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use("/api/orders", orderRoute);
 app.use("/api/loyalty", loyaltyRoute);
 app.use("/api/reviews", reviewRoute);
 app.use("/api/suppliers", supplierRoute);
+app.use("/api/delivery-confirmation", deliveryConfirmationRoute);
 
 app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("Error:", err);
