@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PaymentMethod } from '@prisma/client';
-import { createOrder } from '../services/orderService';
+import { createOrder, getUserOrders } from '../services/orderService';
 
 const parsePaymentMethod = (value: unknown): PaymentMethod => {
   if (!value) return PaymentMethod.CRYPTO;
@@ -69,5 +69,21 @@ export const createOrderHandler = async (req: Request, res: Response): Promise<v
     res.status(201).json(order);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create order', details: err instanceof Error ? err.message : err });
+  }
+};
+
+export const getUserOrdersHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+
+    const orders = await getUserOrders(userId);
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user orders', details: err instanceof Error ? err.message : err });
   }
 };
