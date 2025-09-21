@@ -14,6 +14,7 @@ const order_1 = __importDefault(require("./routes/order"));
 const loyalty_1 = __importDefault(require("./routes/loyalty"));
 const review_1 = __importDefault(require("./routes/review"));
 const supplier_1 = __importDefault(require("./routes/supplier"));
+const deliveryConfirmation_1 = __importDefault(require("./routes/deliveryConfirmation"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -53,6 +54,7 @@ app.use("/api/orders", order_1.default);
 app.use("/api/loyalty", loyalty_1.default);
 app.use("/api/reviews", review_1.default);
 app.use("/api/suppliers", supplier_1.default);
+app.use("/api/delivery-confirmation", deliveryConfirmation_1.default);
 app.use((err, req, res, _next) => {
     console.error("Error:", err);
     if (err.type === "entity.parse.failed") {

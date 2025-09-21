@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOrderHandler = void 0;
+exports.getUserOrdersHandler = exports.createOrderHandler = void 0;
 const client_1 = require("@prisma/client");
 const orderService_1 = require("../services/orderService");
 const parsePaymentMethod = (value) => {
@@ -54,4 +54,19 @@ const createOrderHandler = async (req, res) => {
     }
 };
 exports.createOrderHandler = createOrderHandler;
+const getUserOrdersHandler = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            res.status(400).json({ error: 'User ID is required' });
+            return;
+        }
+        const orders = await (0, orderService_1.getUserOrders)(userId);
+        res.json(orders);
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to fetch user orders', details: err instanceof Error ? err.message : err });
+    }
+};
+exports.getUserOrdersHandler = getUserOrdersHandler;
 //# sourceMappingURL=orderController.js.map

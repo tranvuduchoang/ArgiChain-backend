@@ -45,7 +45,15 @@ const createSupplierHandler = async (req, res) => {
 exports.createSupplierHandler = createSupplierHandler;
 const listSuppliersHandler = async (req, res) => {
     try {
-        const { search, isActive } = req.query;
+        const { search, isActive, walletAddress } = req.query;
+        if (walletAddress) {
+            const suppliers = await (0, supplierService_1.listSuppliers)({
+                walletAddress: String(walletAddress),
+                isActive: parseBoolean(isActive),
+            });
+            res.status(200).json(suppliers);
+            return;
+        }
         const suppliers = await (0, supplierService_1.listSuppliers)({
             search: search ? String(search) : undefined,
             isActive: parseBoolean(isActive),

@@ -1,1 +1,1 @@
-{"version":3,"file":"blockchain.d.ts","sourceRoot":"","sources":["../../src/config/blockchain.ts"],"names":[],"mappings":"AAaA,eAAO,MAAM,iBAAiB;;;;;;;;CAQ7B,CAAC"}
+{"version":3,"file":"blockchain.d.ts","sourceRoot":"","sources":["../../src/config/blockchain.ts"],"names":[],"mappings":"AAaA,eAAO,MAAM,iBAAiB;;;;;;;;CAW7B,CAAC;AAGF,eAAO,MAAM,iBAAiB,UAK7B,CAAC;AAGF,eAAO,MAAM,8BAA8B,QAA6F,CAAC;AAEzI,eAAO,MAAM,gBAAgB;;;;;;;CAO5B,CAAC"}

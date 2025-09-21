@@ -12,10 +12,15 @@ exports.getActiveSupplierContract = getActiveSupplierContract;
 const database_1 = require("../config/database");
 const client_1 = require("@prisma/client");
 const buildSupplierWhere = (params = {}) => {
-    const { search, isActive } = params;
+    const { search, isActive, walletAddress } = params;
     const where = {};
     if (typeof isActive === 'boolean') {
         where.isActive = isActive;
+    }
+    if (walletAddress) {
+        where.user = {
+            walletAddress: walletAddress
+        };
     }
     if (search) {
         where.OR = [
@@ -39,6 +44,31 @@ async function createSupplier(input) {
         throw new Error('Slug already in use');
     }
     return database_1.prisma.$transaction(async (tx) => {
+        let user = await tx.user.findUnique({
+            where: { id: input.userId }
+        });
+        if (!user) {
+            user = await tx.user.create({
+                data: {
+                    id: input.userId,
+                    email: `${input.userId}@wallet.local`,
+                    username: `user_${input.userId.slice(0, 8)}`,
+                    walletAddress: input.userId,
+                    role: client_1.UserRole.SUPPLIER,
+                    isSupplier: true,
+                    isVerified: true,
+                }
+            });
+        }
+        else {
+            await tx.user.update({
+                where: { id: input.userId },
+                data: {
+                    isSupplier: true,
+                    role: client_1.UserRole.SUPPLIER,
+                },
+            });
+        }
         const supplier = await tx.supplier.create({
             data: {
                 userId: input.userId,
@@ -65,18 +95,11 @@ async function createSupplier(input) {
                 members: true,
             },
         });
-        await tx.user.update({
-            where: { id: input.userId },
-            data: {
-                isSupplier: true,
-                role: client_1.UserRole.SUPPLIER,
-            },
-        });
         return supplier;
     });
 }
 async function listSuppliers(params) {
-    return database_1.prisma.supplier.findMany({
+    const suppliers = await database_1.prisma.supplier.findMany({
         where: buildSupplierWhere(params),
         include: {
             members: true,
@@ -85,11 +108,20 @@ async function listSuppliers(params) {
                 orderBy: { createdAt: 'desc' },
             },
             loyaltyPrograms: true,
+            _count: {
+                select: {
+                    products: true,
+                },
+            },
         },
         orderBy: {
             createdAt: 'desc',
         },
     });
+    return suppliers.map(supplier => ({
+        ...supplier,
+        totalProducts: supplier._count.products,
+    }));
 }
 async function getSupplierById(supplierId) {
     return database_1.prisma.supplier.findUnique({

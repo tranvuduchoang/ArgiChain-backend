@@ -28,6 +28,7 @@ export interface UpdateSupplierInput {
 export interface SupplierQueryParams {
     search?: string;
     isActive?: boolean;
+    walletAddress?: string;
 }
 export interface AddBrandMemberInput {
     supplierId: string;
@@ -86,7 +87,11 @@ export declare function createSupplier(input: CreateSupplierInput): Promise<{
     rating: number;
     totalSales: number;
 }>;
-export declare function listSuppliers(params?: SupplierQueryParams): Promise<({
+export declare function listSuppliers(params?: SupplierQueryParams): Promise<{
+    totalProducts: number;
+    _count: {
+        products: number;
+    };
     members: {
         id: string;
         createdAt: Date;
@@ -140,7 +145,6 @@ export declare function listSuppliers(params?: SupplierQueryParams): Promise<({
         tierConfiguration: Prisma.JsonValue | null;
         expirationDays: number | null;
     }[];
-} & {
     id: string;
     description: string | null;
     isActive: boolean;
@@ -158,7 +162,7 @@ export declare function listSuppliers(params?: SupplierQueryParams): Promise<({
     socialLinks: Prisma.JsonValue | null;
     rating: number;
     totalSales: number;
-})[]>;
+}[]>;
 export declare function getSupplierById(supplierId: string): Promise<({
     user: {
         id: string;

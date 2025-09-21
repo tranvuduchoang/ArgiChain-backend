@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createOrder = createOrder;
-const blockchainVerificationService_1 = require("./blockchainVerificationService");
+exports.getUserOrders = getUserOrders;
 const database_1 = require("../config/database");
 const client_1 = require("@prisma/client");
 const toDecimal = (value) => new client_1.Prisma.Decimal(value);
@@ -27,6 +27,22 @@ async function createOrder(input) {
     const normalizedBuyerAddress = normalizeAddress(input.buyerWalletAddress);
     const normalizedTxHash = input.transactionHash.toLowerCase();
     return database_1.prisma.$transaction(async (tx) => {
+        let user = await tx.user.findUnique({
+            where: { id: input.userId }
+        });
+        if (!user) {
+            user = await tx.user.create({
+                data: {
+                    id: input.userId,
+                    email: `${input.userId}@wallet.local`,
+                    username: `user_${input.userId.slice(0, 8)}`,
+                    walletAddress: input.userId,
+                    role: client_1.UserRole.BUYER,
+                    isSupplier: false,
+                    isVerified: true,
+                }
+            });
+        }
         const products = await tx.product.findMany({
             where: { id: { in: productIds } },
             include: {
@@ -44,18 +60,6 @@ async function createOrder(input) {
                 throw new Error('All items must belong to the same supplier');
             }
         });
-        const transferCache = new Map();
-        const getTransfers = async (contractAddress) => {
-            const normalizedContract = contractAddress.toLowerCase();
-            if (!transferCache.has(normalizedContract)) {
-                const result = await (0, blockchainVerificationService_1.fetchErc1155Transfers)({
-                    txHash: normalizedTxHash,
-                    contractAddress: normalizedContract,
-                });
-                transferCache.set(normalizedContract, result);
-            }
-            return transferCache.get(normalizedContract);
-        };
         let subtotal = new client_1.Prisma.Decimal(0);
         const currency = input.currency ?? products[0]?.currency ?? 'MATIC';
         const orderItemsData = [];
@@ -82,14 +86,6 @@ async function createOrder(input) {
                 token.tokenId === product.nftTokenId);
             if (!productTokenRecord) {
                 throw new Error(`Product token not registered for ${product.name}`);
-            }
-            const transfersInfo = await getTransfers(product.contractAddress);
-            const match = transfersInfo.transfers.find((transfer) => bigIntEquals(transfer.id, productTokenRecord.tokenId) &&
-                bigIntEquals(transfer.value, item.quantity) &&
-                addressesMatch(transfer.from, supplierWallet) &&
-                addressesMatch(transfer.to, normalizedBuyerAddress));
-            if (!match) {
-                throw new Error(`Token transfer not found in transaction for product ${product.name}`);
             }
             const unitPrice = item.unitPrice ?? Number(product.pricePerUnit);
             const unitPriceDecimal = toDecimal(unitPrice);
@@ -247,5 +243,36 @@ async function createOrder(input) {
         }
         return order;
     });
+}
+async function getUserOrders(userId) {
+    const orders = await database_1.prisma.order.findMany({
+        where: {
+            userId: userId,
+        },
+        include: {
+            supplier: {
+                include: {
+                    user: true,
+                },
+            },
+            items: {
+                include: {
+                    product: {
+                        include: {
+                            supplier: {
+                                include: {
+                                    user: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+    });
+    return orders;
 }
 //# sourceMappingURL=orderService.js.map

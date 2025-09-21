@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BLOCKCHAIN_CONFIG = void 0;
+exports.blockchainConfig = exports.AGRICHAIN_NFT_CONTRACT_ADDRESS = exports.AGRICHAIN_NFT_ABI = exports.BLOCKCHAIN_CONFIG = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
@@ -18,9 +18,24 @@ exports.BLOCKCHAIN_CONFIG = {
     rpcUrl: process.env.BLOCKCHAIN_RPC_URL || process.env.POLYGON_RPC_URL || 'http://127.0.0.1:8545',
     chainId: parseInt(process.env.BLOCKCHAIN_CHAIN_ID || process.env.POLYGON_CHAIN_ID || '1337', 10),
     network: process.env.BLOCKCHAIN_NETWORK || 'hardhat',
-    deployerPrivateKey: process.env.BLOCKCHAIN_DEPLOYER_KEY || process.env.PRIVATE_KEY || '',
+    deployerPrivateKey: process.env.BLOCKCHAIN_DEPLOYER_KEY || process.env.PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
     metadataBaseUrl: process.env.BLOCKCHAIN_METADATA_BASE_URL || 'https://metadata.agrichain.local',
     contractVersion: process.env.BLOCKCHAIN_CONTRACT_VERSION || '1.0.0',
     artifactsPath: resolveArtifactsPath(),
+};
+exports.AGRICHAIN_NFT_ABI = [
+    "function burnNFT(uint256 tokenId, uint256 amount, bytes32 signature, address user) external",
+    "function balanceOf(address account, uint256 id) external view returns (uint256)",
+    "function isAuthorizedSupplier(address supplier) external view returns (bool)",
+    "event NFTBurned(uint256 indexed tokenId, uint256 amount, address indexed user, address indexed supplier)"
+];
+exports.AGRICHAIN_NFT_CONTRACT_ADDRESS = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1';
+exports.blockchainConfig = {
+    rpcUrl: exports.BLOCKCHAIN_CONFIG.rpcUrl,
+    chainId: exports.BLOCKCHAIN_CONFIG.chainId,
+    network: exports.BLOCKCHAIN_CONFIG.network,
+    privateKey: exports.BLOCKCHAIN_CONFIG.deployerPrivateKey,
+    contractAddress: exports.AGRICHAIN_NFT_CONTRACT_ADDRESS,
+    abi: exports.AGRICHAIN_NFT_ABI
 };
 //# sourceMappingURL=blockchain.js.map

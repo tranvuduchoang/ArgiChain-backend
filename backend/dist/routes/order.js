@@ -7,5 +7,6 @@ const express_1 = __importDefault(require("express"));
 const orderController_1 = require("../controllers/orderController");
 const router = express_1.default.Router();
 router.post('/', orderController_1.createOrderHandler);
+router.get('/user/:userId', orderController_1.getUserOrdersHandler);
 exports.default = router;
 //# sourceMappingURL=order.js.map

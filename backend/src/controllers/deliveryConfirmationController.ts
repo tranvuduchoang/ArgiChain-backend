@@ -26,26 +26,29 @@ export async function confirmDeliveryHandler(req: Request, res: Response): Promi
     });
 
     if (!orderId || !userId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         details: 'orderId and userId are required'
       });
+      return;
     }
 
     // Validate rating if provided
     if (rating && (rating < 1 || rating > 5)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid rating',
         details: 'Rating must be between 1 and 5'
       });
+      return;
     }
 
     // Validate quality rating if provided
     if (qualityRating && !['Good', 'Bad'].includes(qualityRating)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid quality rating',
         details: 'Quality rating must be "Good" or "Bad"'
       });
+      return;
     }
 
     const input: DeliveryConfirmationInput = {
@@ -82,10 +85,11 @@ export async function burnNFTHandler(req: Request, res: Response): Promise<void>
     const { orderId, userId } = req.body;
 
     if (!orderId || !userId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         details: 'orderId and userId are required'
       });
+      return;
     }
 
     const result = await burnNFT(orderId, userId);
@@ -112,10 +116,11 @@ export async function completeDeliveryConfirmationHandler(req: Request, res: Res
     const { orderId, userId } = req.body;
 
     if (!orderId || !userId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         details: 'orderId and userId are required'
       });
+      return;
     }
 
     const result = await completeDeliveryConfirmation(orderId, userId);
@@ -142,18 +147,20 @@ export async function getDeliveryConfirmationHandler(req: Request, res: Response
     const { orderId, userId } = req.params;
 
     if (!orderId || !userId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required parameters',
         details: 'orderId and userId are required'
       });
+      return;
     }
 
     const result = await getDeliveryConfirmation(orderId, userId);
 
     if (!result) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Delivery confirmation not found'
       });
+      return;
     }
 
     res.status(200).json({
@@ -178,10 +185,11 @@ export async function getUserDeliveryConfirmationsHandler(req: Request, res: Res
     const { userId } = req.params;
 
     if (!userId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required parameter',
         details: 'userId is required'
       });
+      return;
     }
 
     const result = await getUserDeliveryConfirmations(userId);

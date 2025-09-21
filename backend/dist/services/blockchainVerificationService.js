@@ -22,12 +22,10 @@ const matchesAddress = (actual, expected) => {
 const bigIntEquals = (a, b) => BigInt(a) === BigInt(b);
 const fetchErc1155Transfers = async (params) => {
     const providerInstance = getProvider();
-    // Kiểm tra transaction có tồn tại trên blockchain không
     const receipt = await providerInstance.getTransactionReceipt(params.txHash);
     if (!receipt) {
         throw new Error('Transaction receipt not found');
     }
-    // Kiểm tra transaction có thành công không
     if (receipt.status !== 1) {
         throw new Error('Transaction failed on-chain');
     }

@@ -443,6 +443,9 @@ export declare function listActiveMarketplaceProducts(): Promise<({
     productId: string;
 })[]>;
 export declare function prepareProductMint(productId: string): Promise<{
+    tokenId: number;
+    contractAddress: string;
+    chainId: number;
     product: {
         id: string;
         name: string;

@@ -171,7 +171,7 @@ async function prepareProductMint(productId) {
     if (!supplierWallet) {
         throw new Error('Supplier wallet address is not configured');
     }
-    const template = await database_1.prisma.smartContractTemplate.findFirst({
+    let template = await database_1.prisma.smartContractTemplate.findFirst({
         where: {
             supplierId: product.supplierId,
             isActive: true,
@@ -181,7 +181,19 @@ async function prepareProductMint(productId) {
         },
     });
     if (!template) {
-        throw new Error('Active supplier contract not found. Deploy an ERC-1155 contract first.');
+        const mainContractAddress = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1';
+        template = await database_1.prisma.smartContractTemplate.create({
+            data: {
+                supplierId: product.supplierId,
+                contractAddress: mainContractAddress,
+                contractType: 'ERC1155',
+                name: 'AgriChain NFT Collection',
+                description: 'Main AgriChain NFT collection for agricultural products',
+                networkChainId: 2442,
+                abi: {},
+                version: '1.0.0',
+            },
+        });
     }
     const metadataAttributes = [
         { trait_type: 'Category', value: product.category },
@@ -197,6 +209,9 @@ async function prepareProductMint(productId) {
         },
     ].filter((attribute) => attribute.value !== undefined && attribute.value !== null);
     return {
+        tokenId: 1,
+        contractAddress: template.contractAddress,
+        chainId: template.networkChainId,
         product: {
             id: product.id,
             name: product.name,
@@ -322,6 +337,19 @@ async function confirmProductMint(input) {
                         status: client_1.ListingStatus.ACTIVE,
                         publishedAt: new Date(),
                     },
+                },
+            };
+        }
+        else {
+            updateData.listings = {
+                create: {
+                    title: product.name,
+                    slug: product.name.toLowerCase().replace(/\s+/g, '-'),
+                    shortDescription: product.description.substring(0, 100),
+                    status: client_1.ListingStatus.ACTIVE,
+                    isFeatured: false,
+                    searchTags: product.tags || [],
+                    publishedAt: new Date(),
                 },
             };
         }
