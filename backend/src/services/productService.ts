@@ -320,6 +320,8 @@ export interface ConfirmProductMintInput {
 }
 
 export async function confirmProductMint(input: ConfirmProductMintInput) {
+  console.log('confirmProductMint input:', input);
+  
   const quantity = Math.max(0, Math.floor(input.mintedQuantity));
   if (quantity <= 0) {
     throw new Error('mintedQuantity must be greater than zero');
@@ -332,6 +334,13 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
 
   const mintedAt = toDate(input.mintedAt) ?? new Date();
   const normalizedContractAddress = input.contractAddress.toLowerCase();
+  
+  console.log('Processing mint confirmation:', {
+    quantity,
+    chainId,
+    normalizedContractAddress,
+    mintedAt,
+  });
 
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.findUnique({
@@ -344,6 +353,8 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
       },
     });
 
+    console.log('Found product:', product ? { id: product.id, name: product.name, supplierId: product.supplierId } : null);
+
     if (!product) {
       throw new Error('Product not found');
     }
@@ -354,7 +365,7 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
       throw new Error('Supplier wallet or user record is not configured');
     }
 
-    const template = await tx.smartContractTemplate.findFirst({
+    let template = await tx.smartContractTemplate.findFirst({
       where: {
         supplierId: product.supplierId,
         contractAddress: normalizedContractAddress,
@@ -362,6 +373,32 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    // If no template exists, create one
+    if (!template) {
+      console.log('Creating new template for contract:', normalizedContractAddress);
+      template = await tx.smartContractTemplate.create({
+        data: {
+          supplierId: product.supplierId,
+          contractAddress: normalizedContractAddress,
+          contractType: 'ERC1155',
+          name: 'AgriChain NFT Collection',
+          description: 'Main AgriChain NFT collection for agricultural products',
+          networkChainId: chainId,
+          abi: {}, // Will be populated from blockchain artifacts
+          version: '1.0.0',
+        },
+      });
+      console.log('Created template:', template.id);
+    } else {
+      console.log('Using existing template:', template.id);
+    }
+
+    console.log('Creating/updating productToken:', {
+      contractAddress: normalizedContractAddress,
+      tokenId: input.tokenId,
+      quantity,
     });
 
     const productToken = await tx.productToken.upsert({
@@ -390,6 +427,8 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
         mintedAt,
       },
     });
+
+    console.log('Created/updated productToken:', productToken.id);
 
     const updateData: Prisma.ProductUpdateInput = {
       contractAddress: normalizedContractAddress,
@@ -488,6 +527,8 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
       },
     });
 
+    console.log('Mint confirmation completed successfully');
+    
     return {
       product: updatedProduct,
       productToken,

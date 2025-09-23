@@ -192,6 +192,16 @@ export const confirmProductMintHandler = async (req: Request, res: Response): Pr
       toAddress,
     } = req.body;
 
+    console.log('Confirm mint request:', {
+      productId,
+      tokenId,
+      contractAddress,
+      transactionHash,
+      mintedQuantity,
+      chainId,
+      toAddress,
+    });
+
     if (!tokenId || !contractAddress || !transactionHash || mintedQuantity === undefined || chainId === undefined) {
       res.status(400).json({ error: 'tokenId, contractAddress, transactionHash, mintedQuantity, and chainId are required' });
       return;
