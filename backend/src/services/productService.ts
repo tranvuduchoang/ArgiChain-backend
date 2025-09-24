@@ -460,10 +460,15 @@ export async function confirmProductMint(input: ConfirmProductMintInput) {
       };
     } else {
       // Create new marketplace listing if none exists
+      // Generate unique slug to avoid constraint conflicts
+      const baseSlug = product.name.toLowerCase().replace(/\s+/g, '-');
+      const timestamp = Date.now();
+      const uniqueSlug = `${baseSlug}-${timestamp}`;
+      
       updateData.listings = {
         create: {
           title: product.name,
-          slug: product.name.toLowerCase().replace(/\s+/g, '-'),
+          slug: uniqueSlug,
           shortDescription: product.description.substring(0, 100),
           status: ListingStatus.ACTIVE,
           isFeatured: false,

@@ -222,8 +222,10 @@ export const confirmProductMintHandler = async (req: Request, res: Response): Pr
 
     res.status(200).json(result);
   } catch (err) {
+    console.error('❌ Error in confirmProductMintHandler:', err);
     const message = err instanceof Error ? err.message : 'Failed to confirm mint';
     const status = message.toLowerCase().includes('not found') ? 404 : 400;
+    console.error('❌ Error details:', { message, status });
     res.status(status).json({ error: 'Failed to confirm mint', details: message });
   }
 };

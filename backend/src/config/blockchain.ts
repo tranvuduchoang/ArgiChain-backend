@@ -35,7 +35,7 @@ export const AGRICHAIN_NFT_ABI = [
 ];
 
 // Contract address (will be updated after deployment)
-export const AGRICHAIN_NFT_CONTRACT_ADDRESS = process.env.AGRICHAIN_NFT_ADDRESS || '0x739ECFc4a3C66e1E0b14B4581C5dA3341586a4E4';
+export const AGRICHAIN_NFT_CONTRACT_ADDRESS = process.env.AGRICHAIN_NFT_ADDRESS || '0x0124b7D07Ebd0E9EDaACCdD126375671c3506f70';
 
 export const blockchainConfig = {
   rpcUrl: BLOCKCHAIN_CONFIG.rpcUrl,
