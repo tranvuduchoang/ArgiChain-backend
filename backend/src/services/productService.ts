@@ -233,7 +233,7 @@ export async function prepareProductMint(productId: string) {
   // If no template exists, use the main AgriChainNFT contract
   if (!template) {
     // Use the main deployed AgriChainNFT contract
-    const mainContractAddress = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1';
+    const mainContractAddress = process.env.AGRICHAIN_NFT_CONTRACT_ADDRESS || '0x739ECFc4a3C66e1E0b14B4581C5dA3341586a4E4';
     
     template = await prisma.smartContractTemplate.create({
       data: {
@@ -242,7 +242,7 @@ export async function prepareProductMint(productId: string) {
         contractType: 'ERC1155',
         name: 'AgriChain NFT Collection',
         description: 'Main AgriChain NFT collection for agricultural products',
-        networkChainId: 2442, // Cardona testnet
+        networkChainId: 97, // BSC Testnet
         abi: {}, // Will be populated from blockchain artifacts
         version: '1.0.0',
       },
