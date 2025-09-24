@@ -196,7 +196,7 @@ model Product {
   tags                String[]
   pricingModel        PricingModel  @default(FIXED)
   pricePerUnit        Decimal       @db.Decimal(18, 4)
-  currency            String        @default("MATIC")
+  currency            String
   totalSupply         Int
   availableSupply     Int
   unit                String
@@ -307,7 +307,7 @@ model Order {
   subtotalAmount  Decimal        @db.Decimal(18, 4)
   feeAmount       Decimal        @db.Decimal(18, 4)
   totalAmount     Decimal        @db.Decimal(18, 4)
-  currency        String         @default("MATIC")
+  currency        String
   transactionHash String?
   deliveryAddress String
   deliveryMethod  String
@@ -357,7 +357,7 @@ model PaymentReceipt {
   payerAddress    String?
   receiverAddress String?
   amount          Decimal        @db.Decimal(18, 4)
-  currency        String         @default("MATIC")
+  currency        String
   metadata        Json?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
